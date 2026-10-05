@@ -1,6 +1,7 @@
 package com.example.SecurityPractice;
 
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -12,7 +13,10 @@ import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
+import org.springframework.security.provisioning.JdbcUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
+
+import javax.sql.DataSource;
 
 import static org.springframework.security.config.Customizer.withDefaults;
 
@@ -20,6 +24,9 @@ import static org.springframework.security.config.Customizer.withDefaults;
 @EnableWebSecurity
 @EnableMethodSecurity
 public class SecurityConfig {
+
+    @Autowired
+    DataSource dataSource;
 
     @Bean
     SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
@@ -40,7 +47,7 @@ public class SecurityConfig {
 
     @Bean
     public UserDetailsService userDetailsService() {
-        UserDetails user1 = User.withUsername("user")
+        UserDetails user1 = User.withUsername("user1")
                 .password("{noop}user1")
                 .roles("USER")
                 .build();
@@ -49,6 +56,10 @@ public class SecurityConfig {
                 .password("{noop}admin")
                 .roles("ADMIN")
                 .build();
-        return new InMemoryUserDetailsManager(user1, admin);
+        JdbcUserDetailsManager userDetailsManager = new JdbcUserDetailsManager(dataSource);
+        userDetailsManager.createUser(user1);
+        userDetailsManager.createUser(admin);
+        return userDetailsManager;
+//        return new InMemoryUserDetailsManager(user1, admin);
     }
 }
